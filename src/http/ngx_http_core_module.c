@@ -61,6 +61,8 @@ static char *ngx_http_core_directio(ngx_conf_t *cf, ngx_command_t *cmd,
     void *conf);
 static char *ngx_http_core_error_page(ngx_conf_t *cf, ngx_command_t *cmd,
     void *conf);
+static char *ngx_http_core_no_error_pages(ngx_conf_t *cf, ngx_command_t *cmd,
+    void *conf);
 static char *ngx_http_core_open_file_cache(ngx_conf_t *cf, ngx_command_t *cmd,
     void *conf);
 static char *ngx_http_core_error_log(ngx_conf_t *cf, ngx_command_t *cmd,
@@ -650,6 +652,14 @@ static ngx_command_t  ngx_http_core_commands[] = {
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_HTTP_LIF_CONF
                         |NGX_CONF_2MORE,
       ngx_http_core_error_page,
+      NGX_HTTP_LOC_CONF_OFFSET,
+      0,
+      NULL },
+
+    { ngx_string("no_error_pages"),
+      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_HTTP_LIF_CONF
+                        |NGX_CONF_NOARGS,
+      ngx_http_core_no_error_pages,
       NGX_HTTP_LOC_CONF_OFFSET,
       0,
       NULL },
@@ -3380,7 +3390,6 @@ ngx_http_core_create_loc_conf(ngx_conf_t *cf)
      *     clcf->types = NULL;
      *     clcf->default_type = { 0, NULL };
      *     clcf->error_log = NULL;
-     *     clcf->error_pages = NULL;
      *     clcf->client_body_path = NULL;
      *     clcf->regex = NULL;
      *     clcf->exact_match = 0;
@@ -3392,6 +3401,7 @@ ngx_http_core_create_loc_conf(ngx_conf_t *cf)
      *     clcf->keepalive_disable = 0;
      */
 
+    clcf->error_pages = NGX_CONF_UNSET_PTR;
     clcf->client_max_body_size = NGX_CONF_UNSET;
     clcf->client_body_buffer_size = NGX_CONF_UNSET_SIZE;
     clcf->client_body_timeout = NGX_CONF_UNSET_MSEC;
@@ -3590,9 +3600,7 @@ ngx_http_core_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
         }
     }
 
-    if (conf->error_pages == NULL && prev->error_pages) {
-        conf->error_pages = prev->error_pages;
-    }
+    ngx_conf_merge_ptr_value(conf->error_pages, prev->error_pages, NULL);
 
     ngx_conf_merge_str_value(conf->default_type,
                               prev->default_type, "text/plain");
@@ -4597,6 +4605,10 @@ ngx_http_core_error_page(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     ngx_http_compile_complex_value_t   ccv;
 
     if (clcf->error_pages == NULL) {
+        return "conflicts with \"no_error_pages\"";
+    }
+
+    if (clcf->error_pages == NGX_CONF_UNSET_PTR) {
         clcf->error_pages = ngx_array_create(cf->pool, 4,
                                              sizeof(ngx_http_err_page_t));
         if (clcf->error_pages == NULL) {
@@ -4696,6 +4708,25 @@ ngx_http_core_error_page(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         err->value = cv;
         err->args = args;
     }
+
+    return NGX_CONF_OK;
+}
+
+
+static char *
+ngx_http_core_no_error_pages(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
+{
+    ngx_http_core_loc_conf_t *clcf = conf;
+
+    if (clcf->error_pages == NULL) {
+        return "is duplicate";
+    }
+
+    if (clcf->error_pages != NGX_CONF_UNSET_PTR) {
+        return "conflicts with \"error_page\"";
+    }
+
+    clcf->error_pages = NULL;
 
     return NGX_CONF_OK;
 }
