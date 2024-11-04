@@ -68,6 +68,8 @@ struct ngx_listening_s {
     unsigned            shared:1;    /* shared between threads or processes */
     unsigned            addr_ntop:1;
     unsigned            wildcard:1;
+    // zzl modified
+    unsigned            privileged_agent:1;
 
 #if (NGX_HAVE_INET6)
     unsigned            ipv6only:1;

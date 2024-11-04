@@ -1263,7 +1263,13 @@ ngx_privileged_agent_process_cycle(ngx_cycle_t *cycle, void *data)
     ngx_process = NGX_PROCESS_HELPER;
     ngx_is_privileged_agent = 1;
 
-    ngx_close_listening_sockets(cycle);
+    // zzl modified
+    // ngx_close_listening_sockets(cycle);
+    if (ngx_open_listening_sockets(cycle) != NGX_OK) {
+        ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
+                      "failed to init privileged agent listeners");
+        exit(2);
+    }
 
     /* Set a moderate number of connections for a helper process. */
     cycle->connection_n = 512;
@@ -1278,6 +1284,8 @@ ngx_privileged_agent_process_cycle(ngx_cycle_t *cycle, void *data)
 
         if (ngx_terminate || ngx_quit) {
             ngx_log_error(NGX_LOG_NOTICE, cycle->log, 0, "exiting");
+            // zzl modified
+            ngx_close_listening_sockets(cycle);
             ngx_worker_process_exit(cycle);
         }
 

@@ -82,6 +82,8 @@ typedef struct {
     unsigned                   reuseport:1;
     unsigned                   so_keepalive:2;
     unsigned                   proxy_protocol:1;
+    // zzl modified
+    unsigned                   privileged_agent:1;
 
     int                        backlog;
     int                        rcvbuf;

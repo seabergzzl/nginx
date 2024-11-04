@@ -4112,6 +4112,21 @@ ngx_http_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
             continue;
         }
 
+        // zzl modified
+        if (ngx_strncmp(value[n].data, "enable_process=", 15) == 0) {
+            if (ngx_strcmp(&value[n].data[15], "privileged_agent") == 0) {
+                lsopt.privileged_agent = 1;
+
+            } else {
+                ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                                   "invalid enable_process value: \"%s\"",
+                                   &value[n].data[15]);
+                return NGX_CONF_ERROR;
+            }
+
+            continue;
+        }
+
         ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
                            "invalid parameter \"%V\"", &value[n]);
         return NGX_CONF_ERROR;

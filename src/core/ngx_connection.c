@@ -433,6 +433,10 @@ ngx_open_listening_sockets(ngx_cycle_t *cycle)
             if (ls[i].ignore) {
                 continue;
             }
+            // zzl modified
+            if (ngx_is_privileged_agent != ls[i].privileged_agent) {
+                continue;
+            }
 
 #if (NGX_HAVE_REUSEPORT)
 

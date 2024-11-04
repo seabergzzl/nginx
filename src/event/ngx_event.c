@@ -820,7 +820,10 @@ ngx_event_process_init(ngx_cycle_t *cycle)
     for (i = 0; i < cycle->listening.nelts; i++) {
 
 #if (NGX_HAVE_REUSEPORT)
-        if (ls[i].reuseport && ls[i].worker != ngx_worker) {
+        // zzl modified
+        // if (ls[i].reuseport && ls[i].worker != ngx_worker) {
+        if ((ngx_is_privileged_agent && !ls[i].privileged_agent)
+            || (ls[i].reuseport && ls[i].worker != ngx_worker)) {
             ngx_log_debug2(NGX_LOG_DEBUG_CORE, cycle->log, 0,
                            "closing unused fd:%d listening on %V",
                            ls[i].fd, &ls[i].addr_text);
@@ -833,6 +836,10 @@ ngx_event_process_init(ngx_cycle_t *cycle)
 
             ls[i].fd = (ngx_socket_t) -1;
 
+            continue;
+        }
+        // zzl modified
+        if (!ngx_is_privileged_agent && ls[i].privileged_agent) {
             continue;
         }
 #endif

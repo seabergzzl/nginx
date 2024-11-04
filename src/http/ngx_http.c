@@ -1217,6 +1217,14 @@ ngx_http_add_addresses(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
             continue;
         }
 
+        // zzl modified
+        if (lsopt->privileged_agent != addr[i].opt.privileged_agent) {
+            ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                               "%V is already occupied by privileged agent",
+                               &addr[i].opt.addr_text);
+            return NGX_ERROR;
+        }
+
         /* the address is already in the address list */
 
         if (ngx_http_add_server(cf, cscf, &addr[i]) != NGX_OK) {
@@ -1769,6 +1777,9 @@ ngx_http_add_listening(ngx_conf_t *cf, ngx_http_conf_addr_t *addr)
 #if (NGX_HAVE_REUSEPORT)
     ls->reuseport = addr->opt.reuseport;
 #endif
+
+    // zzl modified
+    ls->privileged_agent = addr->opt.privileged_agent;
 
     return ls;
 }
